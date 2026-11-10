@@ -247,6 +247,8 @@ public struct Machine: ~Copyable {
     withUnsafeMutableMainMemory(at: pa, write(byte))
   }
 
+
+  /// MARK: MMAP
   /// Creates a new mapping in the virtual address space with a capacity of at least `byteCount`
   /// bytes and `permissions`.
   ///
@@ -259,8 +261,70 @@ public struct Machine: ~Copyable {
   public mutating func mmap(
     byteCount: Int, nearby hint: VirtualAddress, for ps: PagePermissions
   ) -> VirtualAddress? {
-    // TODO
-    nil
+    // check for valid byte count
+    precondition(byteCount > 0, "cannot allocate zero bytes or less")
+
+    // count the number of pages needed (divide by 256 and round up)
+    let pageCount = ((byteCount - 1) >> 8) + 1
+    guard pageCount <= 255 else { return nil }
+
+    // check for valid page count
+    // guard pageCount == 1 else { return nil }
+    guard pageCount <= 255 else { return nil }
+
+    // turns the hint into a page-aligned address
+    let pageAligned = VirtualAddress(rawValue: hint.rawValue & 0xff00)
+
+    // turns the page-aligned address into a page number (at least 1, since page 0 is reserved for the kernel)
+    let firstPage = hint.isNull ? 1 : max(Int(pageAligned.rawValue) >> 8, 1)
+
+    // Search from the hint to the end of the address space, then wrap around.
+    for offset in 0 ..< 255 {
+      // turns the offset into a page number in the range 1 ..< 256
+      let pageNumber = 1 + ((firstPage - 1 + offset) % 255)
+
+      // must stay withing the address space
+      guard pageNumber + pageCount <= 256 else { continue }
+
+      // turns the page number into a page-aligned address
+      let address = VirtualAddress(rawValue: UInt16(pageNumber << 8))
+
+
+      var runIsFree = true
+      // Check if the run of pages starting at `pageNumber` is free.
+      for pageOffset in 0 ..< pageCount {
+        // turns the page number into a page-aligned address
+        let page = VirtualAddress(rawValue: UInt16((pageNumber + pageOffset) << 8))
+        // check if the page is already mapped
+        if translate(page, for: []) != nil {
+          runIsFree = false
+          break
+        }
+      }
+
+      if runIsFree {
+        for pageOffset in 0 ..< pageCount {
+          // turns the page number into a page-aligned address
+          let page = VirtualAddress(rawValue: UInt16((pageNumber + pageOffset) << 8))
+          // allocate the page
+          if allocate(page, for: ps) == nil {
+            return nil
+          }
+        }
+
+        return address
+      }
+
+      // // check if the address is already mapped
+      // guard translate(address, for: []) == nil else { continue }
+      // // check if the address can be allocated (permissions)
+      // guard allocate(address, for: ps) != nil else { return nil }
+      // // return the address of the new mapping
+      // return address
+
+    }
+    // no suitable address was found
+    return nil
   }
 
   /// Information about an entry in a page directory.

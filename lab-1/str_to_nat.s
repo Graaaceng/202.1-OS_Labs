@@ -1,7 +1,7 @@
 .data
-  // A 4-bytes buffer.
+  // Change from a 4-bytes buffer to a 11-bytes buffer (ten digits and a newline)
   buffer:
-    .word 0
+    .space 11
 
 .text
 
@@ -21,14 +21,18 @@ _print_nat:
   // Writes `\n` at the end of the buffer.
   ldr   x3, =buffer
   mov   w4, #10
-  strb  w4, [x3, #3]
+  strb  w4, [x3, #10]
+
+  // Reject values larger than an unsigned 32-bit integer.
+  lsr   x1, x0, #32
+  cbnz  x1, _print_nat_error
 
   // Is `x0` equal to 0?
   cbz   w0, _print_nat_0
 
   // Otherwise, write each digit from right to left in a buffer, using `w1` to track the index of
   // the leftmost digit written in the buffer referred to by `x3`.
-  mov   w1, #3
+  mov   w1, #10
   mov   w2, #10
 _print_nat_head:
 
@@ -46,16 +50,21 @@ _print_nat_head:
 
 _print_nat_0:
   mov   w4, #48
-  strb  w4, [x3, #6]
-  mov   w1, #6
+  strb  w4, [x3, #9]
+  mov   w1, #9
 
 _print_nat_n:
   // Print the contents of the buffer referred to by `x3` starting from `w2`.
   add   x4, x3, x1
-  mov   w3, #4
+  mov   w3, #11
   sub   w2, w3, w1
   mov   x1, x4
   mov   x0, #1
   mov   w8, #64
   svc   #0
   ret
+
+_print_nat_error:
+  mov   w0, #1
+  mov   w8, #93
+  svc   #0

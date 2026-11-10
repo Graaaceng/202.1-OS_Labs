@@ -50,7 +50,22 @@ struct Interpreter {
 
   /// Returns the processes that are still active but whose parents have terminated.
   func zombies() -> [Int] {
-    [] // TODO
+    var zombies = [Int]()
+
+    // find processes that are terminated (no continuation and returned a value)
+    let terminated = self.processes.enumerated().filter { (i, p) in
+      p.control.isValue && p.continuation.isEmpty
+    }
+
+    // see if those processes have processing children
+    for t in terminated {
+      let (i, _) = t
+      if children[i] != 0 {
+        zombies.append(i)
+      }
+    }
+    
+    return zombies
   }
 
   /// Performs a single evaluation step and returns the status of the machine.
@@ -184,9 +199,25 @@ struct Interpreter {
     }
   }
 
+
+  func isDone() -> Bool {
+    if  case .wait = processes[executing].control {
+      return true 
+     }
+    return false
+  }
+  func isWaiting() -> Bool {
+    if processes[executing].continuation.isEmpty, processes[executing].control.isValue {
+        return true 
+     }
+    return false
+  }
+
   /// Prepares the machine for the next step and returns its status.
   private mutating func next() -> Status {
-    let d = executing + 1
+    let d =  if isDone(), isWaiting() {
+      executing + 1
+    } else {executing}
     let a = allocated >> d
     let n = a.trailingZeroBitCount
     executing = (n < 64) ? (n + d) : allocated.trailingZeroBitCount
