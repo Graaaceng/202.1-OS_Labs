@@ -73,7 +73,7 @@ public struct PetriNet {
 
   /// Returns the marking obtained after firing `s` form `m`.
   ///
-  /// - Requires: `m` assigns each place in `self` and `t` is fireable from `m`.
+  /// - Requires: `m` assigns each place in `self`.
   public func fire<S: Sequence<Int>>(_ s: S, from m: Marking) -> Marking {
     todo()
   }
