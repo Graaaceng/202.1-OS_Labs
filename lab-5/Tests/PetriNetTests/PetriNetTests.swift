@@ -29,6 +29,22 @@ struct PetriNetTests {
     #expect(m.fire(1, from: [2, 2]) == [3, 1])
   }
 
+  @Test
+  func fireableSequence() {
+    let m = model()
+
+    #expect(m.fireable([0, 1], from: [1, 1]))
+    #expect(!m.fireable([0, 1], from: [0, 1]))
+  }
+
+  @Test
+  func fireSequence() {
+    let m = model()
+
+    #expect(m.fire([0, 1], from: [1, 1]) == [1, 1])
+    #expect(m.fire([1, 0], from: [1, 1]) == [1, 1])
+  }
+
   /// Returns a simple Petri net.
   func model() -> PetriNet {
     var m = PetriNet(placeCount: 2, transitionCount: 2)

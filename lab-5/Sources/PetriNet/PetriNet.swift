@@ -58,7 +58,12 @@ public struct PetriNet {
   ///
   /// - Requires: `m` assigns each place in `self`.
   public func fireable<S: Sequence<Int>>(_ s: S, from m: Marking) -> Bool {
-    todo()
+    var m = m
+    for t in s {
+      if !fireable(t, from: m) { return false }
+      m = fire(t, from: m)
+    }
+    return true
   }
 
   /// Returns the marking obtained after firing `t` from `m`.
@@ -75,7 +80,11 @@ public struct PetriNet {
   ///
   /// - Requires: `m` assigns each place in `self` and `t` is fireable from `m`.
   public func fire<S: Sequence<Int>>(_ s: S, from m: Marking) -> Marking {
-    todo()
+    var m = m
+    for t in s {
+      m = fire(t, from: m)
+    }
+    return m
   }
 
   /// Returns a sequence of transitions fireable from `m` that leads to a marking satisfying `phi`
