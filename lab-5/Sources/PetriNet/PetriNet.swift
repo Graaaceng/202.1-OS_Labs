@@ -82,7 +82,7 @@ public struct PetriNet {
   /// if such marking exists; otherwise, returns `nil`.
   ///
   /// - Requires: `m` assigns each place in `self` and `t` is fireable from `m`.
-  public func sequence(from m: Marking, toMarkingSatisfying phi: (Marking) -> Bool) -> [Int] {
+  public func sequence(from m: Marking, toMarkingSatisfying phi: (Marking) -> Bool) -> [Int]? {
     todo()
   }
 
