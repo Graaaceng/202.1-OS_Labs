@@ -43,7 +43,7 @@ public struct ReachabilityGraph: Sendable {
   public mutating func insertEdge(from m0: Marking, to m1: Marking, labeledBy t: Int) -> Bool {
     insertMarking(m1)
     return modify(&successors[m0, default: []]) { (s) in
-      let i = s.partitioningIndex(by: { (a, b) in a.transition < b.transition })
+      let i = s.partitioningIndex(by: { (a) in a.transition > t })
       if (i < s.count) && (s[i].transition == t) {
         return false
       } else {
